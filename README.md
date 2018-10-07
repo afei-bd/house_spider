@@ -22,9 +22,12 @@ House spider是一个简单的爬虫脚本，利用Selenium/BeautifulSoup/Chrome
 
 ## Dependency
 
-### Selenium
+House spider是一个爬虫工具，依赖以下第三方工具：
 
-### BeautifulSoup
+1. Selenium: Selenium [1]  是一个用于Web应用程序测试的工具。Selenium测试直接运行在浏览器中，就像真正的用户在操作一样。House spider利用Selenium进行网页的翻页、点击等模拟行为
 
-### Chrome Webdriver
+2. BeautifulSoup: compile the Python interface
 
+3. Chrome Webdriver: compile GPU part
+
+[1]:	https://www.seleniumhq.org/

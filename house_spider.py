@@ -66,77 +66,99 @@ def init_log(path, level=logging.INFO, split_mode="D", backup_num=7,
     return logger
 
 def parser_config(config_file, config_dict):
-	""" Check config file """
-	#print config_file
-	logging.info("loading config file %s" % (config_file) )
-	if config_file is None or not os.path.isfile(config_file):
-		logging.error("config file %s not find" % (config_file) )
-		return -1
-
-	cf = ConfigParser.ConfigParser()
-	cf.read(config_file)
-	if not cf.has_section("spider"):
-		logging.error("config format error: cannot find section spider!")
-		return -1
-
-	"""
-	Config file format:
-
-	[spider] 
-	query_list: ./query        ; seed file path
-	host: https://**.**        ; output directory 
-
+    """ Check config file """
+    #print config_file
+    logging.info("loading config file %s" % (config_file) )
+    if config_file is None or not os.path.isfile(config_file):
+        logging.error("config file %s not find" % (config_file) )
+        return -1
+    
+    cf = ConfigParser.ConfigParser()
+    cf.read(config_file)
+    if not cf.has_section("spider"):
+        logging.error("config format error: cannot find section spider!")
+        return -1
+    
+    """
+    Config file format:
+    [spider] 
+    query_list: ./query        ; seed file path
+    host: https://**.**        ; output directory 
+    
     [webdrvier]
-	headless: 1                ; max crawl depth 
-	ua: 1                      ; crawl time interval (second)
-	"""
+    headless: 1                ; max crawl depth 
+    ua: 1                      ; crawl time interval (second)
+    """
+    
+    """ url list file """
+    try:
+        config_dict["query_list"] = cf.get("spider", "query_list")
+    except ConfigParser.NoOptionError as error:
+        # default url list file
+        if os.path.isfile("./query_list"):	
+            config_dict["query_list"] = "./query_list"
+        else:
+            logging.error("cannot find crawl query list!")
+            return -1
+    
+    """ host url """
+    try:
+        config_dict["host"] = cf.get("spider", "host")
+    except ConfigParser.NoOptionError as error:
+        config_dict["host"] = "https://m.lianjia.com/bj/ershoufang/"
+    
+    """ output dir """
+    try:
+        config_dict["output_dir"] = cf.get("spider", "output_dir")
+    except ConfigParser.NoOptionError as error:
+        config_dict["output_dir"] = "./output"
+    
+    if not os.path.exists(config_dict["output_dir"]):
+        os.makedirs(config_dict["output_dir"])
+    
+    """ webdriver headless """
+    try:
+        ## 0: headless false, 1: headless true
+        config_dict["headless"] = cf.getint("webdriver", "headless")
+    except ConfigParser.NoOptionError as error:
+        ## default: headless
+        config_dict["headless"] = 1
 
-	""" url list file """
-	try:
-		config_dict["query_list"] = cf.get("spider", "query_list")
-	except ConfigParser.NoOptionError as error:
-		# default url list file
-		if os.path.isfile("./query_list"):	
-			config_dict["query_list"] = "./query_list"
-		else:
-			logging.error("cannot find crawl query list!")
-			return -1
+    """ script timeout """
+    try:
+        ## 0: headless false, 1: headless true
+        config_dict["script_timeout"] = cf.getint("webdriver", "script_timeout")
+    except ConfigParser.NoOptionError as error:
+        ## default: headless
+        config_dict["script_timeout"] = 1
 
-	""" host url """
-	try:
-		config_dict["host"] = cf.get("spider", "host")
-	except ConfigParser.NoOptionError as error:
-		config_dict["host"] = "https://m.lianjia.com/bj/ershoufang/"
+    """ page_load_timeout timeout """
+    try:
+        ## 0: headless false, 1: headless true
+        config_dict["page_load_timeout"] = cf.getint("webdriver", "page_load_timeout")
+    except ConfigParser.NoOptionError as error:
+        ## default: headless
+        config_dict["page_load_timeout"] = 1
 
-	""" output dir """
-	try:
-		config_dict["output_dir"] = cf.get("spider", "output_dir")
-	except ConfigParser.NoOptionError as error:
-		config_dict["output_dir"] = "./output"
+    """ image """
+    try:
+        ## 0: headless false, 1: headless true
+        config_dict["image"] = cf.getint("webdriver", "image")
+    except ConfigParser.NoOptionError as error:
+        ## default: headless
+        config_dict["image"] = 1
+    except Exception as error:
+        logging.error("get param image from conf error! err_msg=%s" %(error))
 
-	if not os.path.exists(config_dict["output_dir"]):
-		os.makedirs(config_dict["output_dir"])
-
-	""" thread count """
-	try:
-		config_dict["thread_count"] = cf.getint("spider", "thread_count")
-		# check thread count conf
-		if config_dict["thread_count"] <= 0:
-			logging.info("config thread count error!")
-			config_dict["thread_count"] = 8
-	except ConfigParser.NoOptionError as error:
-		config_dict["thread_count"] = 8
-
-	return 0
+    return 0
 
 def get_host(url):
     proto, rest = urllib2.splittype(url)
-    host, rest = urllib2.splithost(rest) 
+    host, rest  = urllib2.splithost(rest) 
     return None if not host else host 
 
 def parser_visit_detail(url, driver):
     detail_list = list()
-
     ## driver load url
     try:
         logging.info("get url: %s by webdriver" %(url))
@@ -223,7 +245,6 @@ def parser_house_by_selenium(prefix, query, driver, save_dir):
     for house in houselist:
         detail_url = (house.find_all('a'))[0].get('href')
         detail_url = "https://"+host+detail_url
-        #print detail_url
         detail = parser_visit_detail(detail_url, driver)
         if detail != None and len(detail) > 0:
             ## static info
@@ -298,8 +319,7 @@ def main():
         if not len(line) or line.startswith("#"):
             logging.info("skip line: %s" %(line.strip()))
             continue
-
-        #print url, save_file
+        
         parser_house_by_selenium(url_host, line.strip(), driver, save_dir)
     
     driver.quit()

@@ -26,22 +26,22 @@ House spider是一个爬虫工具，依赖以下第三方工具：
 
 1. Selenium: Selenium [1] 是一个用于Web应用程序测试的工具。Selenium测试直接运行在浏览器中，就像真正的用户在操作一样。在House spider里，利用Selenium模拟网页的翻页、点击等行为，访问小区的搜索结果列表页及详情页。
 
-selenium安装: 
+    selenium安装: 
 
     $ pip install selenium
 
 2. BeautifulSoup: Beautiful Soup [2] 是一个可以从HTML或XML文件中提取数据的Python库.它能够通过你喜欢的转换器实现惯用的文档导航。House spider利用Beautiful Soup解析HTML页面中特点的节点元素，来提取目标数据信息。
 
-BeautifulSoup安装: 
+    BeautifulSoup安装: 
 
     $ pip install BeautifulSoup
 
 
 3. Chrome Webdriver: WebDriver顾名思义，是用来drive web browser的。chrome webdriver是用来驱动chrome执行自动化测试的。使用Chrome webdriver需要与Chrome浏览器的版本对应 [4]。
 
-Windows Chrome Webdriver安装与配置: https://www.jianshu.com/p/5ea69cd6c3f5
+    Windows Chrome Webdriver安装与配置: https://www.jianshu.com/p/5ea69cd6c3f5
 
-MacOS Chrome Webdriver安装与配置: https://www.jianshu.com/p/e137031bc7db
+    MacOS Chrome Webdriver安装与配置: https://www.jianshu.com/p/e137031bc7db
 
 [1]:	https://www.seleniumhq.org/
 [2]:    https://www.crummy.com/software/BeautifulSoup/bs4/doc/index.zh.html

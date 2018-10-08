@@ -24,10 +24,13 @@ House spider是一个简单的爬虫脚本，利用Selenium/BeautifulSoup/Chrome
 
 House spider是一个爬虫工具，依赖以下第三方工具：
 
-1. Selenium: Selenium [1]  是一个用于Web应用程序测试的工具。Selenium测试直接运行在浏览器中，就像真正的用户在操作一样。House spider利用Selenium进行网页的翻页、点击等模拟行为
+1. Selenium: Selenium [1] 是一个用于Web应用程序测试的工具。Selenium测试直接运行在浏览器中，就像真正的用户在操作一样。在House spider里，利用Selenium模拟网页的翻页、点击等行为，访问小区的搜索结果列表页及详情页。
 
-2. BeautifulSoup: 
+2. BeautifulSoup: Beautiful Soup [2] 是一个可以从HTML或XML文件中提取数据的Python库.它能够通过你喜欢的转换器实现惯用的文档导航。House spider利用Beautiful Soup解析HTML页面中特点的节点元素，来提取目标数据信息。
 
-3. Chrome Webdriver: 
+3. Chrome Webdriver: WebDriver顾名思义，是用来drive web browser的。chrome webdriver是用来驱动chrome执行自动化测试的。Selenium支持多种不同的webdriver [3]，如 firefox/ie/phanomjs等。House spider选择的是chrome driver。使用的webdriver需要与相应的浏览器版本对应 [4]
 
 [1]:	https://www.seleniumhq.org/
+[2]:    https://www.crummy.com/software/BeautifulSoup/bs4/doc/index.zh.html
+[3]:    https://docs.seleniumhq.org/projects/webdriver/
+[4]:    https://blog.csdn.net/huilan_same/article/details/51896672

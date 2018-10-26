@@ -65,11 +65,19 @@ House spider是一个爬虫工具，依赖以下第三方工具：
 
 输出文件位置: ./output/
 
-detail信息: ./output/$day/$query，格式：
+detail信息: 当日在售房源信息，存储位置：./output/$day/$小区名称，格式：
 
     url \t 总价 \t 房型 \t 面积 \t 单价 \t 挂牌时间 \t 朝向 \t 楼层 \t 7天带看 \t 30天带看 \t 收藏人数 
 
-static信息: ./output/$query，格式:
+daily diff信息: 该小区与昨天相比，房源信息的变化情况，包括房源新增、下线、涨价与降价，存储位置：./output/$day/diff.info，格式：
+
+    小区名称 \t day1 vs day2 \t 新增房源:$num1 \t 下线房源:$num2 \t 涨价房源:$num3 \t 降价房源:$num4
+    新增 \t 房源信息
+    下线 \t 房源信息
+    降价 \t 房源信息
+    涨价 \t 房源信息
+
+static信息: 待爬取小区的汇总统计信息，./output/$小区名称，格式:
     
     时间 \t 在售房源数 \t  7天带看 \t 30天带看 \t 收藏人数
 

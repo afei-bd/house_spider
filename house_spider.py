@@ -2,7 +2,7 @@
 # encoding=utf8  
 
 """
-Date:    2018/10/07
+Date:    2017/12/05
 """
 import os
 import logging
@@ -31,6 +31,7 @@ __usage__ = ""
 counter = 1
 speed = 20
 MAX_PAGE = 4
+DATA_LEN = 7
 
 def show_version():
     print __version__
@@ -66,99 +67,77 @@ def init_log(path, level=logging.INFO, split_mode="D", backup_num=7,
     return logger
 
 def parser_config(config_file, config_dict):
-    """ Check config file """
-    #print config_file
-    logging.info("loading config file %s" % (config_file) )
-    if config_file is None or not os.path.isfile(config_file):
-        logging.error("config file %s not find" % (config_file) )
-        return -1
-    
-    cf = ConfigParser.ConfigParser()
-    cf.read(config_file)
-    if not cf.has_section("spider"):
-        logging.error("config format error: cannot find section spider!")
-        return -1
-    
-    """
-    Config file format:
-    [spider] 
-    query_list: ./query        ; seed file path
-    host: https://**.**        ; output directory 
-    
+	""" Check config file """
+	#print config_file
+	logging.info("loading config file %s" % (config_file) )
+	if config_file is None or not os.path.isfile(config_file):
+		logging.error("config file %s not find" % (config_file) )
+		return -1
+
+	cf = ConfigParser.ConfigParser()
+	cf.read(config_file)
+	if not cf.has_section("spider"):
+		logging.error("config format error: cannot find section spider!")
+		return -1
+
+	"""
+	Config file format:
+
+	[spider] 
+	query_list: ./query        ; seed file path
+	host: https://**.**        ; output directory 
+
     [webdrvier]
-    headless: 1                ; max crawl depth 
-    ua: 1                      ; crawl time interval (second)
-    """
-    
-    """ url list file """
-    try:
-        config_dict["query_list"] = cf.get("spider", "query_list")
-    except ConfigParser.NoOptionError as error:
-        # default url list file
-        if os.path.isfile("./query_list"):	
-            config_dict["query_list"] = "./query_list"
-        else:
-            logging.error("cannot find crawl query list!")
-            return -1
-    
-    """ host url """
-    try:
-        config_dict["host"] = cf.get("spider", "host")
-    except ConfigParser.NoOptionError as error:
-        config_dict["host"] = "https://m.lianjia.com/bj/ershoufang/"
-    
-    """ output dir """
-    try:
-        config_dict["output_dir"] = cf.get("spider", "output_dir")
-    except ConfigParser.NoOptionError as error:
-        config_dict["output_dir"] = "./output"
-    
-    if not os.path.exists(config_dict["output_dir"]):
-        os.makedirs(config_dict["output_dir"])
-    
-    """ webdriver headless """
-    try:
-        ## 0: headless false, 1: headless true
-        config_dict["headless"] = cf.getint("webdriver", "headless")
-    except ConfigParser.NoOptionError as error:
-        ## default: headless
-        config_dict["headless"] = 1
+	headless: 1                ; max crawl depth 
+	ua: 1                      ; crawl time interval (second)
+	"""
 
-    """ script timeout """
-    try:
-        ## 0: headless false, 1: headless true
-        config_dict["script_timeout"] = cf.getint("webdriver", "script_timeout")
-    except ConfigParser.NoOptionError as error:
-        ## default: headless
-        config_dict["script_timeout"] = 1
+	""" url list file """
+	try:
+		config_dict["query_list"] = cf.get("spider", "query_list")
+	except ConfigParser.NoOptionError as error:
+		# default url list file
+		if os.path.isfile("./query_list"):	
+			config_dict["query_list"] = "./query_list"
+		else:
+			logging.error("cannot find crawl query list!")
+			return -1
 
-    """ page_load_timeout timeout """
-    try:
-        ## 0: headless false, 1: headless true
-        config_dict["page_load_timeout"] = cf.getint("webdriver", "page_load_timeout")
-    except ConfigParser.NoOptionError as error:
-        ## default: headless
-        config_dict["page_load_timeout"] = 1
+	""" host url """
+	try:
+		config_dict["host"] = cf.get("spider", "host")
+	except ConfigParser.NoOptionError as error:
+		config_dict["host"] = "https://m.lianjia.com/bj/ershoufang/"
 
-    """ image """
-    try:
-        ## 0: headless false, 1: headless true
-        config_dict["image"] = cf.getint("webdriver", "image")
-    except ConfigParser.NoOptionError as error:
-        ## default: headless
-        config_dict["image"] = 1
-    except Exception as error:
-        logging.error("get param image from conf error! err_msg=%s" %(error))
+	""" output dir """
+	try:
+		config_dict["output_dir"] = cf.get("spider", "output_dir")
+	except ConfigParser.NoOptionError as error:
+		config_dict["output_dir"] = "./output"
 
-    return 0
+	if not os.path.exists(config_dict["output_dir"]):
+		os.makedirs(config_dict["output_dir"])
+
+	""" thread count """
+	try:
+		config_dict["thread_count"] = cf.getint("spider", "thread_count")
+		# check thread count conf
+		if config_dict["thread_count"] <= 0:
+			logging.info("config thread count error!")
+			config_dict["thread_count"] = 8
+	except ConfigParser.NoOptionError as error:
+		config_dict["thread_count"] = 8
+
+	return 0
 
 def get_host(url):
     proto, rest = urllib2.splittype(url)
-    host, rest  = urllib2.splithost(rest) 
+    host, rest = urllib2.splithost(rest) 
     return None if not host else host 
 
 def parser_visit_detail(url, driver):
-    detail_list = list()
+    detail_list = []
+
     ## driver load url
     try:
         logging.info("get url: %s by webdriver" %(url))
@@ -181,9 +160,10 @@ def parser_visit_detail(url, driver):
 
         ## parser house info
         li_info = content.find_all("li", {"class":"short"})
-        li_list = list()
+        li_list = []
         for li in li_info:
             li_list.append(li.get_text())
+        
         detail_list.extend(li_list[:4])
 
         ## parser visit info
@@ -213,6 +193,10 @@ def parser_house_by_selenium(prefix, query, driver, save_dir):
     url = prefix + query
     detail_save_file = save_dir + "/" + query
     commu_save_file  = save_dir + "/../" + query
+
+    ## 
+    if os.path.exists(detail_save_file):
+        return
 
     ## step 2: open url by chrome driver 
     try:
@@ -245,6 +229,7 @@ def parser_house_by_selenium(prefix, query, driver, save_dir):
     for house in houselist:
         detail_url = (house.find_all('a'))[0].get('href')
         detail_url = "https://"+host+detail_url
+        #print detail_url
         detail = parser_visit_detail(detail_url, driver)
         if detail != None and len(detail) > 0:
             ## static info
@@ -264,6 +249,114 @@ def parser_house_by_selenium(prefix, query, driver, save_dir):
     commu_info.append("30日带看:"+str(visit_30_day))
     commu_info.append("关注人数:"+str(all_follower))
     save('\t'.join(commu_info)+"\n", commu_save_file)
+    #print '\t'.join(commu_info)
+
+def read_file(file_dir):
+    file_info = list()
+    try:
+        file_fp = open(file_dir)
+        for line in file_fp:
+            line = line.strip('\n').split('\t')
+            house_id = (re.findall(r"(.*)?/(.+).html", line[0]))[0][1]
+            newline  = [ house_id ] + line
+            #print newline
+            ## key : house id \t house info
+            file_info.append(newline)
+        file_fp.close()
+    except Exception as err:
+        logging.error("read file %s error, msg=%s" %(file_dir, err))
+    
+    return file_info
+
+def find_elem(item, src_list):
+    for elem in src_list:
+        if item in elem:
+            return elem
+    return list()
+
+def get_price(str):
+    return str[:-6]
+
+def get_daily_diff(query, file_dir):
+    ## get today data
+    cur_day  = datetime.date.today().strftime('%Y%m%d')
+    cur_file = file_dir + "/" + cur_day + "/" + query
+    if not os.path.exists(cur_file):
+        logging.error("%s file does not exist!" %(cur_file))
+        return
+    
+    save_file = file_dir + "/" + cur_day + "/" + "diff.info"
+    
+    ## find last data in last DATA_LEN days
+    last_day  = ""
+    last_file = ""
+    find_flag = False
+    for i in range(1,DATA_LEN):
+        last_day  = (datetime.date.today() - datetime.timedelta(days=i))
+        last_file = file_dir + "/" + last_day.strftime('%Y%m%d') + "/" + query
+        if os.path.exists(last_file):
+            logging.info("find file: %s" %(last_file))
+            find_flag = True
+            break
+    
+    if find_flag == False:
+        logging.warn("cannot find data of %s in last week" %(query))
+        return
+    
+    ## comparing data
+    logging.info("compare %s data of %s and %s" %(query, cur_day, last_day))
+    cur_data  = read_file(cur_file)
+    last_data = read_file(last_file)
+
+    ## find new info
+    new_data = list()
+    price_up = list()
+    price_dn = list()
+    for elem in cur_data:
+        house_id  = elem[0]
+        price_new = get_price(elem[2])
+        match_res = find_elem(house_id, last_data)
+        if len(match_res) <= 0:
+            new_data.append(elem)
+        else:
+            price_old = get_price(match_res[2])
+            price_str = [price_old+"=>"+price_new]
+            if price_new > price_old:
+                price_up.append(elem + price_str)
+            elif price_new < price_old:
+                price_dn.append(elem + price_str)
+
+    ## find del info
+    del_data = list()
+    for elem in last_data:
+        house_id  = elem[0]
+        match_res = find_elem(house_id, cur_data)
+        if len(match_res) <= 0:
+            del_data.append(elem)
+    
+    ## save result and print result
+    save_info = query + '\t' + str(cur_day)  + " vs " + str(last_day)
+    save_info = save_info + '\t' + "新增房源: " + str(len(new_data))
+    save_info = save_info + '\t' + "下线房源: " + str(len(del_data))
+    save_info = save_info + '\t' + "涨价房源: " + str(len(price_up))
+    save_info = save_info + '\t' + "降价房源: " + str(len(price_dn))
+    save_info = save_info + '\n'
+    for item in new_data:
+        save_info = save_info + "新增\t" + '\t'.join(item[1:]) + '\n'
+
+    for item in del_data:
+        save_info = save_info + "下线\t" + '\t'.join(item[1:]) + '\n'
+
+    for item in price_up:
+        save_info = save_info + "涨价(" + item[-1] + ")\t" + '\t'.join(item[1:-1]) + '\n'
+
+    for item in price_dn:
+        save_info = save_info + "降价(" + item[-1] + ")\t" + '\t'.join(item[1:-1]) + '\n'
+    
+    save_info = save_info + '\n' 
+    save(save_info, save_file)
+
+    return 0
 
 def main():
     parser = argparse.ArgumentParser()
@@ -273,7 +366,6 @@ def main():
         parser.print_help()
         sys.exit(0)
     
-    """ Parser config """
     args = parser.parse_args()
     
     """ Show version """
@@ -281,6 +373,8 @@ def main():
         show_version()
         sys.exit(0)
     
+    """ Parser config """
+
     """ Initial webdriver """
     options = webdriver.ChromeOptions()
     options.add_argument('lang=zh_CN.UTF-8')
@@ -296,7 +390,7 @@ def main():
     """ Parser config file """
     conf_dict = {}
     if parser_config(args.config, conf_dict) < 0:
-        logger.error("parser config %s failed!" %(args.config))
+        logger.error("parser config %s failed!" %(args.config) )
         sys.exit(-1)
 
     """ save dir """
@@ -306,23 +400,22 @@ def main():
         os.makedirs(save_dir)
 
     """ read url file and put to the queue """
-    query_list = list()
-    try:
-        query_list = open(conf_dict["query_list"])
-    except Exception as e:
-        logger.error("open query list file failed! err_msg=%s" %(e))
-        return -1
-
+    query_list = open(conf_dict["query_list"])
     url_host   = conf_dict["host"]    
     for line in query_list:
         ## skip comment line and empty line
         if not len(line) or line.startswith("#"):
             logging.info("skip line: %s" %(line.strip()))
             continue
-        
+
+        # print url, save_file
         parser_house_by_selenium(url_host, line.strip(), driver, save_dir)
+
+        # post process, calculate daily diff
+        get_daily_diff(line.strip(), conf_dict["output_dir"])
     
     driver.quit()
+
 
     return 0
 
